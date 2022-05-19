@@ -1,34 +1,44 @@
 pipeline {
-    //triggers {
- // pollSCM('* * * * *')
-    //}
     agent any
-    tools {
-  maven 'M2_HOME'
-}
+    tools{
+        maven 'M2_HOME'
+    }
+    environment {
+    registry = '081752819005.dkr.ecr.us-east-1.amazonaws.com/devops-repo'
+    registryCredential = 'jenkins-ECR'
+    dockerimage = ''
+  }
     stages {
-        stage('maven package') {
-            steps {
-                sh 'mvn clean'
-                sh 'mvn install'
-                sh 'mvn package'
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/laurametchum/hello-world.git'
             }
         }
-          stage('test') {
+        stage('Code Build') {
             steps {
-               sh 'mvn test'
+                sh 'mvn clean package'
             }
         }
-          stage('deploy') {
+        stage('Test') {
             steps {
-                echo 'deployement'
-              sleep 10
+                sh 'mvn test'
             }
-          }
-            stage ('docker'){
-              steps{
-            echo 'image step'
-              }
+        }
+        stage('Build Image') {
+            steps {
+                script{
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                } 
             }
+        }
+        stage('Deploy image') {
+            steps{
+                script{ 
+                    docker.withRegistry("https://"+registry,"ecr:us-east-1:"+registryCredential) {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }  
     }
 }
