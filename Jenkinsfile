@@ -10,16 +10,14 @@ pipeline {
           stage('test') {
             steps {
                 echo "test step"
-                
             }
         }
-         
           stage('deploy') {
             steps {
                 echo 'deployement'
-                sleep 10
-                
+                sleep 10       
             }
+          }
             stage('docker') {
             steps {
                 echo 'image step'
